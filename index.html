@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertidor de Monedas en Tiempo Real</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para animaciones y scrollbar */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .swap-btn {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .swap-btn:hover {
+            transform: rotate(180deg) scale(1.05);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Navbar superior -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 text-white p-2 rounded-xl shadow-md shadow-brand-500/20">
+                    <i data-lucide="coins" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">CurrencyFlow</h1>
+                    <p class="text-xs text-slate-500 font-medium">Microapp Financiera</p>
+                </div>
+            </div>
+
+            <!-- Estado de la API -->
+            <div id="apiStatus" class="flex items-center space-x-2 text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200/60 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="apiStatusText">Tasas en vivo</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+        
+        <!-- Grid del Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Columna Izquierda: Tarjeta Principal del Convertidor -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+                    
+                    <!-- Elemento decorativo de fondo -->
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Convertidor Express</h2>
+                            <p class="text-sm text-slate-500">Convierte divisas en tiempo real con datos actualizados</p>
+                        </div>
+                        <button id="refreshRatesBtn" title="Actualizar tasas" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-slate-100 rounded-full transition-colors">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Formulario de Conversión -->
+                    <div class="space-y-5">
+                        
+                        <!-- Input de Cantidad -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Monto a Convertir</label>
+                            <div class="relative rounded-2xl shadow-sm">
+                                <input type="number" id="amountInput" min="0" step="any" value="100" class="w-full bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-900 text-2xl font-bold rounded-2xl py-3.5 px-4 outline-none transition-all" placeholder="0.00">
+                                <span id="inputCurrencySymbol" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-lg">S/</span>
+                            </div>
+                        </div>
+
+                        <!-- Selectores de Monedas con botón Swap -->
+                        <div class="grid grid-cols-1 sm:grid-cols-11 gap-3 items-center relative">
+                            
+                            <!-- Moneda de Origen -->
+                            <div class="sm:col-span-5">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">De</label>
+                                <div class="relative">
+                                    <select id="fromCurrency" class="w-full bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 font-semibold rounded-2xl py-3.5 pl-11 pr-8 appearance-none outline-none cursor-pointer transition-all">
+                                        <!-- Opciones dinámicas -->
+                                    </select>
+                                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl leading-none pointer-events-none" id="fromFlag">
+                                        🇵🇪
+                                    </div>
+                                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón de Intercambio (Swap) -->
+                            <div class="sm:col-span-1 flex justify-center py-1 sm:py-0">
+                                <button id="swapBtn" class="swap-btn bg-brand-600 hover:bg-brand-700 text-white p-3.5 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center focus:outline-none" title="Intercambiar Monedas">
+                                    <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+
+                            <!-- Moneda de Destino -->
+                            <div class="sm:col-span-5">
+                                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">A</label>
+                                <div class="relative">
+                                    <select id="toCurrency" class="w-full bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 font-semibold rounded-2xl py-3.5 pl-11 pr-8 appearance-none outline-none cursor-pointer transition-all">
+                                        <!-- Opciones dinámicas -->
+                                    </select>
+                                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl leading-none pointer-events-none" id="toFlag">
+                                        🇺🇸
+                                    </div>
+                                    <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Panel de Resultado -->
+                        <div class="bg-gradient-to-br from-slate-900 to-brand-900 rounded-2xl p-6 text-white shadow-xl mt-6 relative overflow-hidden">
+                            <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-brand-500/20 rounded-full blur-2xl"></div>
+                            
+                            <div class="text-xs text-slate-300 font-medium mb-1">Resultado de la conversión:</div>
+                            <div class="flex items-baseline space-x-2 flex-wrap">
+                                <span id="resultAmount" class="text-3xl sm:text-4xl font-extrabold tracking-tight">0.00</span>
+                                <span id="resultCurrencyCode" class="text-lg font-semibold text-brand-200">USD</span>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                                <span id="exchangeRateText">1 PEN = 0.00 USD</span>
+                                <span id="lastUpdatedText" class="italic">Actualizado: Cargando...</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tarjeta de Conversiones Rápidas -->
+                <div class="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/60 border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+                            Conversiones Rápidas Populares
+                        </h3>
+                        <span class="text-xs text-slate-400" id="quickConversionsBaseText">Base: PEN</span>
+                    </div>
+
+                    <div id="quickGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Columna Derecha: Historial y Datos del Mercado -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Historial Reciente -->
+                <div class="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/60 border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4 text-brand-600"></i>
+                            Historial Reciente
+                        </h3>
+                        <button id="clearHistoryBtn" class="text-xs text-slate-400 hover:text-red-500 transition-colors">
+                            Limpiar
+                        </button>
+                    </div>
+
+                    <div id="historyList" class="space-y-3 max-h-[260px] overflow-y-auto pr-1">
+                        <!-- Contenido dinámico del historial -->
+                    </div>
+                </div>
+
+                <!-- Mini Panel Informativo Financiero -->
+                <div class="bg-gradient-to-br from-brand-50 to-indigo-50 border border-brand-100 rounded-3xl p-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-brand-600 text-white p-3 rounded-2xl shadow-md">
+                            <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-900 text-sm mb-1">¿Sabías qué?</h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Las tasas de cambio fluctúan constantemente debido a la oferta y demanda en los mercados globales de divisas (Forex). Las tasas mostradas son de referencia internacional.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monedas más cotizadas hoy -->
+                <div class="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/60 border border-slate-200/80">
+                    <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+                        Top Divisas Globales (vs USD)
+                    </h3>
+                    <div class="divide-y divide-slate-100 text-xs" id="topDivisasList">
+                        <!-- Lista dinámica -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+            <p>© 2026 CurrencyFlow Microapp • Creado para aprendizaje de desarrollo web interactivo</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Principal -->
+    <script>
+        // Listado de Monedas disponibles con código, nombre, símbolo y emoji de bandera
+        const CURRENCIES = [
+            { code: 'PEN', name: 'Sol Peruano', symbol: 'S/', flag: '🇵🇪' },
+            { code: 'USD', name: 'Dólar Estadounidense', symbol: '$', flag: '🇺🇸' },
+            { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+            { code: 'MXN', name: 'Peso Mexicano', symbol: '$', flag: '🇲🇽' },
+            { code: 'COP', name: 'Peso Colombiano', symbol: '$', flag: '🇨🇴' },
+            { code: 'ARS', name: 'Peso Argentino', symbol: '$', flag: '🇦🇷' },
+            { code: 'BRL', name: 'Real Brasileño', symbol: 'R$', flag: '🇧🇷' },
+            { code: 'CLP', name: 'Peso Chileno', symbol: '$', flag: '🇨🇱' },
+            { code: 'CAD', name: 'Dólar Canadiense', symbol: '$', flag: '🇨🇦' },
+            { code: 'GBP', name: 'Libra Esterlina', symbol: '£', flag: '🇬🇧' },
+            { code: 'JPY', name: 'Yen Japonés', symbol: '¥', flag: '🇯🇵' },
+            { code: 'CHF', name: 'Franco Suizo', symbol: 'CHF', flag: '🇨🇭' }
+        ];
+
+        // Tasas de cambio de respaldo (Fallback por si la API falla) base USD
+        const FALLBACK_RATES = {
+            USD: 1,
+            PEN: 3.75,
+            EUR: 0.92,
+            MXN: 17.10,
+            COP: 3920.50,
+            ARS: 865.00,
+            BRL: 4.95,
+            CLP: 970.00,
+            CAD: 1.35,
+            GBP: 0.79,
+            JPY: 150.20,
+            CHF: 0.88
+        };
+
+        // Estado global de la aplicación
+        let exchangeRates = { ...FALLBACK_RATES };
+        let conversionHistory = [];
+        let isLiveApi = false;
+
+        // Elementos DOM
+        const amountInput = document.getElementById('amountInput');
+        const fromCurrencySelect = document.getElementById('fromCurrency');
+        const toCurrencySelect = document.getElementById('toCurrency');
+        const fromFlag = document.getElementById('fromFlag');
+        const toFlag = document.getElementById('toFlag');
+        const swapBtn = document.getElementById('swapBtn');
+        const resultAmount = document.getElementById('resultAmount');
+        const resultCurrencyCode = document.getElementById('resultCurrencyCode');
+        const exchangeRateText = document.getElementById('exchangeRateText');
+        const lastUpdatedText = document.getElementById('lastUpdatedText');
+        const inputCurrencySymbol = document.getElementById('inputCurrencySymbol');
+        const apiStatus = document.getElementById('apiStatus');
+        const apiStatusText = document.getElementById('apiStatusText');
+        const refreshRatesBtn = document.getElementById('refreshRatesBtn');
+        const quickGrid = document.getElementById('quickGrid');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const topDivisasList = document.getElementById('topDivisasList');
+        const quickConversionsBaseText = document.getElementById('quickConversionsBaseText');
+
+        // Inicializar la aplicación
+        window.addEventListener('DOMContentLoaded', () => {
+            populateCurrencyDropdowns();
+            // Selección por defecto: PEN a USD
+            fromCurrencySelect.value = 'PEN';
+            toCurrencySelect.value = 'USD';
+            updateFlagsAndSymbols();
+
+            // Cargar datos de tasas y realizar primera conversión
+            fetchExchangeRates().then(() => {
+                calculateConversion();
+                renderTopDivisas();
+            });
+
+            // Event Listeners
+            amountInput.addEventListener('input', calculateConversion);
+            fromCurrencySelect.addEventListener('change', () => {
+                updateFlagsAndSymbols();
+                calculateConversion();
+            });
+            toCurrencySelect.addEventListener('change', () => {
+                updateFlagsAndSymbols();
+                calculateConversion();
+            });
+
+            swapBtn.addEventListener('click', swapCurrencies);
+            refreshRatesBtn.addEventListener('click', () => {
+                refreshRatesBtn.querySelector('i').classList.add('animate-spin');
+                fetchExchangeRates().then(() => {
+                    setTimeout(() => {
+                        refreshRatesBtn.querySelector('i').classList.remove('animate-spin');
+                    }, 500);
+                    calculateConversion();
+                });
+            });
+
+            clearHistoryBtn.addEventListener('click', () => {
+                conversionHistory = [];
+                renderHistory();
+            });
+
+            // Renderizar Lucide Icons
+            lucide.createIcons();
+        });
+
+        // Poblar selects con las monedas disponibles
+        function populateCurrencyDropdowns() {
+            const optionsHtml = CURRENCIES.map(c => 
+                `<option value="${c.code}">${c.code} - ${c.name}</option>`
+            ).join('');
+
+            fromCurrencySelect.innerHTML = optionsHtml;
+            toCurrencySelect.innerHTML = optionsHtml;
+        }
+
+        // Obtener tasas de cambio en tiempo real desde la API pública
+        async function fetchExchangeRates() {
+            try {
+                // API gratuita pública sin necesidad de Key para pruebas
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                if (!response.ok) throw new Error('Error al conectar con la API');
+                
+                const data = await response.json();
+                if (data && data.rates) {
+                    exchangeRates = data.rates;
+                    isLiveApi = true;
+                    setApiStatus(true, 'Tasas en Vivo');
+                    const date = new Date(data.time_last_update_unix * 1000);
+                    lastUpdatedText.innerText = `Actualizado: ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                }
+            } catch (error) {
+                console.warn('API no disponible. Usando datos simulados de respaldo.', error);
+                exchangeRates = { ...FALLBACK_RATES };
+                isLiveApi = false;
+                setApiStatus(false, 'Modo Simulado (Offline)');
+                lastUpdatedText.innerText = 'Actualizado: Datos Simulados';
+            }
+        }
+
+        // Actualizar indicador de estado de API
+        function setApiStatus(isOnline, text) {
+            apiStatusText.innerText = text;
+            if (isOnline) {
+                apiStatus.className = 'flex items-center space-x-2 text-xs bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200/60 font-medium';
+                apiStatus.querySelector('span').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+            } else {
+                apiStatus.className = 'flex items-center space-x-2 text-xs bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full border border-amber-200/60 font-medium';
+                apiStatus.querySelector('span').className = 'w-2 h-2 rounded-full bg-amber-500';
+            }
+        }
+
+        // Actualizar banderas y símbolos en la UI
+        function updateFlagsAndSymbols() {
+            const fromObj = CURRENCIES.find(c => c.code === fromCurrencySelect.value);
+            const toObj = CURRENCIES.find(c => c.code === toCurrencySelect.value);
+
+            if (fromObj) {
+                fromFlag.innerText = fromObj.flag;
+                inputCurrencySymbol.innerText = fromObj.symbol;
+            }
+            if (toObj) {
+                toFlag.innerText = toObj.flag;
+            }
+        }
+
+        // Intercambiar Moneda de Origen y Destino
+        function swapCurrencies() {
+            const temp = fromCurrencySelect.value;
+            fromCurrencySelect.value = toCurrencySelect.value;
+            toCurrencySelect.value = temp;
+
+            updateFlagsAndSymbols();
+            calculateConversion();
+        }
+
+        // Calcular conversión
+        function calculateConversion() {
+            const amount = parseFloat(amountInput.value) || 0;
+            const fromCode = fromCurrencySelect.value;
+            const toCode = toCurrencySelect.value;
+
+            // Obtener tasa relativa mediante USD como puente si es necesario
+            const rateFromUSD = exchangeRates[fromCode] || 1;
+            const rateToUSD = exchangeRates[toCode] || 1;
+
+            // 1 FROM = X TO
+            const conversionRate = (1 / rateFromUSD) * rateToUSD;
+            const convertedTotal = amount * conversionRate;
+
+            // Actualizar vista
+            resultAmount.innerText = formatNumber(convertedTotal, toCode);
+            resultCurrencyCode.innerText = toCode;
+
+            // Formatear texto de tasa unitaria
+            const unitRate = (1 * conversionRate).toFixed(4);
+            exchangeRateText.innerText = `1 ${fromCode} = ${unitRate} ${toCode}`;
+
+            // Renderizar conversiones rápidas
+            renderQuickConversions(amount, fromCode);
+
+            // Agregar al historial si el monto > 0 (debounce implícito al presionar o modificar de forma relevante)
+            if (amount > 0) {
+                addToHistory(amount, fromCode, convertedTotal, toCode, unitRate);
+            }
+        }
+
+        // Formateador de números según la moneda
+        function formatNumber(value, currencyCode) {
+            // Monedas sin decimales comunes
+            if (['CLP', 'COP', 'JPY', 'ARS'].includes(currencyCode) && value > 100) {
+                return value.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            }
+            return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        }
+
+        // Renderizar Conversiones Rápidas (Valores comunes como 10, 50, 100, 500)
+        function renderQuickConversions(baseAmount, fromCode) {
+            quickConversionsBaseText.innerText = `Base: 1 ${fromCode}`;
+            const targetCodes = ['USD', 'EUR', 'PEN', 'MXN'].filter(code => code !== fromCode).slice(0, 4);
+
+            const rateFromUSD = exchangeRates[fromCode] || 1;
+
+            let html = '';
+            targetCodes.forEach(targetCode => {
+                const targetObj = CURRENCIES.find(c => c.code === targetCode) || { flag: '🌐', symbol: '' };
+                const rateToUSD = exchangeRates[targetCode] || 1;
+                const rate = (1 / rateFromUSD) * rateToUSD;
+                const converted = 1 * rate;
+
+                html += `
+                    <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3 hover:bg-slate-100/80 transition-colors cursor-pointer" onclick="selectQuickCurrency('${targetCode}')">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-base">${targetObj.flag}</span>
+                            <span class="text-xs font-bold text-slate-700">${targetCode}</span>
+                        </div>
+                        <div class="text-sm font-extrabold text-slate-900">${formatNumber(converted, targetCode)}</div>
+                        <div class="text-[10px] text-slate-400">por 1 ${fromCode}</div>
+                    </div>
+                `;
+            });
+
+            quickGrid.innerHTML = html;
+        }
+
+        // Permitir cambiar moneda de destino al hacer click en rápido
+        function selectQuickCurrency(code) {
+            toCurrencySelect.value = code;
+            updateFlagsAndSymbols();
+            calculateConversion();
+        }
+
+        // Gestión del Historial
+        let historyDebounceTimeout;
+        function addToHistory(amount, fromCode, result, toCode, unitRate) {
+            clearTimeout(historyDebounceTimeout);
+            historyDebounceTimeout = setTimeout(() => {
+                const fromObj = CURRENCIES.find(c => c.code === fromCode);
+                const toObj = CURRENCIES.find(c => c.code === toCode);
+
+                const newItem = {
+                    id: Date.now(),
+                    fromCode,
+                    fromFlag: fromObj ? fromObj.flag : '',
+                    amount,
+                    toCode,
+                    toFlag: toObj ? toObj.flag : '',
+                    result,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+
+                // Evitar duplicados idénticos consecutivos
+                if (conversionHistory.length > 0) {
+                    const last = conversionHistory[0];
+                    if (last.fromCode === fromCode && last.toCode === toCode && last.amount === amount) {
+                        return;
+                    }
+                }
+
+                conversionHistory.unshift(newItem);
+                if (conversionHistory.length > 5) conversionHistory.pop(); // Máximo 5 registros
+                renderHistory();
+            }, 800);
+        }
+
+        function renderHistory() {
+            if (conversionHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-xs italic">
+                        No hay conversiones recientes aún.
+                    </div>
+                `;
+                return;
+            }
+
+            historyList.innerHTML = conversionHistory.map(item => `
+                <div class="flex items-center justify-between p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-xs hover:bg-slate-100/60 transition-colors">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">${item.fromFlag}</span>
+                        <span class="font-bold text-slate-700">${item.amount} ${item.fromCode}</span>
+                        <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400"></i>
+                        <span class="text-base">${item.toFlag}</span>
+                        <span class="font-bold text-brand-600">${formatNumber(item.result, item.toCode)} ${item.toCode}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400">${item.time}</span>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        // Renderizar Top Divisas Globales
+        function renderTopDivisas() {
+            const topCodes = ['EUR', 'GBP', 'PEN', 'MXN', 'BRL'];
+            
+            topDivisasList.innerHTML = topCodes.map(code => {
+                const curr = CURRENCIES.find(c => c.code === code);
+                const rate = exchangeRates[code] || 1;
+                return `
+                    <div class="py-2.5 flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="text-lg">${curr.flag}</span>
+                            <div>
+                                <div class="font-bold text-slate-800">${curr.code}</div>
+                                <div class="text-[10px] text-slate-400">${curr.name}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-900">${formatNumber(rate, code)}</div>
+                            <div class="text-[10px] text-slate-400">vs 1 USD</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
