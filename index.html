@@ -32,7 +32,6 @@
         }
     </script>
     <style>
-        /* Estilos personalizados para animaciones y scrollbar */
         .glass-card {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -44,7 +43,6 @@
         .swap-btn:hover {
             transform: rotate(180deg) scale(1.05);
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -95,7 +93,6 @@
                 
                 <div class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 relative overflow-hidden">
                     
-                    <!-- Elemento decorativo de fondo -->
                     <div class="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
                     <div class="flex items-center justify-between mb-6">
@@ -120,7 +117,7 @@
                             </div>
                         </div>
 
-                        <!-- Selectores de Monedas con botón Swap -->
+                        <!-- Selectores de Monedas -->
                         <div class="grid grid-cols-1 sm:grid-cols-11 gap-3 items-center relative">
                             
                             <!-- Moneda de Origen -->
@@ -128,7 +125,6 @@
                                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">De</label>
                                 <div class="relative">
                                     <select id="fromCurrency" class="w-full bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 font-semibold rounded-2xl py-3.5 pl-11 pr-8 appearance-none outline-none cursor-pointer transition-all">
-                                        <!-- Opciones dinámicas -->
                                     </select>
                                     <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl leading-none pointer-events-none" id="fromFlag">
                                         🇵🇪
@@ -139,7 +135,7 @@
                                 </div>
                             </div>
 
-                            <!-- Botón de Intercambio (Swap) -->
+                            <!-- Botón Swap -->
                             <div class="sm:col-span-1 flex justify-center py-1 sm:py-0">
                                 <button id="swapBtn" class="swap-btn bg-brand-600 hover:bg-brand-700 text-white p-3.5 rounded-2xl shadow-lg shadow-brand-500/30 flex items-center justify-center focus:outline-none" title="Intercambiar Monedas">
                                     <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
@@ -151,7 +147,6 @@
                                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">A</label>
                                 <div class="relative">
                                     <select id="toCurrency" class="w-full bg-slate-50 border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-slate-800 font-semibold rounded-2xl py-3.5 pl-11 pr-8 appearance-none outline-none cursor-pointer transition-all">
-                                        <!-- Opciones dinámicas -->
                                     </select>
                                     <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xl leading-none pointer-events-none" id="toFlag">
                                         🇺🇸
@@ -194,13 +189,12 @@
                     </div>
 
                     <div id="quickGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <!-- Generado dinámicamente -->
                     </div>
                 </div>
 
             </div>
 
-            <!-- Columna Derecha: Historial y Datos del Mercado -->
+            <!-- Columna Derecha: Historial y Datos -->
             <div class="lg:col-span-5 space-y-6">
 
                 <!-- Historial Reciente -->
@@ -216,11 +210,10 @@
                     </div>
 
                     <div id="historyList" class="space-y-3 max-h-[260px] overflow-y-auto pr-1">
-                        <!-- Contenido dinámico del historial -->
                     </div>
                 </div>
 
-                <!-- Mini Panel Informativo Financiero -->
+                <!-- Mini Panel Informativo -->
                 <div class="bg-gradient-to-br from-brand-50 to-indigo-50 border border-brand-100 rounded-3xl p-6">
                     <div class="flex items-start space-x-4">
                         <div class="bg-brand-600 text-white p-3 rounded-2xl shadow-md">
@@ -235,14 +228,13 @@
                     </div>
                 </div>
 
-                <!-- Monedas más cotizadas hoy -->
+                <!-- Monedas más cotizadas -->
                 <div class="bg-white rounded-3xl p-6 shadow-md shadow-slate-200/60 border border-slate-200/80">
                     <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
                         <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
                         Top Divisas Globales (vs USD)
                     </h3>
                     <div class="divide-y divide-slate-100 text-xs" id="topDivisasList">
-                        <!-- Lista dinámica -->
                     </div>
                 </div>
 
@@ -252,16 +244,15 @@
 
     </main>
 
-    <!-- Footer -->
+    <!-- Footer modificado -->
     <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
         <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
-            <p>© 2026 CurrencyFlow Microapp • Creado para aprendizaje de desarrollo web interactivo</p>
+            <p>© 2026 CurrencyFlow Microapp</p>
         </div>
     </footer>
 
     <!-- JavaScript Principal -->
     <script>
-        // Listado de Monedas disponibles con código, nombre, símbolo y emoji de bandera
         const CURRENCIES = [
             { code: 'PEN', name: 'Sol Peruano', symbol: 'S/', flag: '🇵🇪' },
             { code: 'USD', name: 'Dólar Estadounidense', symbol: '$', flag: '🇺🇸' },
@@ -277,28 +268,15 @@
             { code: 'CHF', name: 'Franco Suizo', symbol: 'CHF', flag: '🇨🇭' }
         ];
 
-        // Tasas de cambio de respaldo (Fallback por si la API falla) base USD
         const FALLBACK_RATES = {
-            USD: 1,
-            PEN: 3.75,
-            EUR: 0.92,
-            MXN: 17.10,
-            COP: 3920.50,
-            ARS: 865.00,
-            BRL: 4.95,
-            CLP: 970.00,
-            CAD: 1.35,
-            GBP: 0.79,
-            JPY: 150.20,
-            CHF: 0.88
+            USD: 1, PEN: 3.75, EUR: 0.92, MXN: 17.10, COP: 3920.50,
+            ARS: 865.00, BRL: 4.95, CLP: 970.00, CAD: 1.35, GBP: 0.79, JPY: 150.20, CHF: 0.88
         };
 
-        // Estado global de la aplicación
         let exchangeRates = { ...FALLBACK_RATES };
         let conversionHistory = [];
         let isLiveApi = false;
 
-        // Elementos DOM
         const amountInput = document.getElementById('amountInput');
         const fromCurrencySelect = document.getElementById('fromCurrency');
         const toCurrencySelect = document.getElementById('toCurrency');
@@ -319,21 +297,27 @@
         const topDivisasList = document.getElementById('topDivisasList');
         const quickConversionsBaseText = document.getElementById('quickConversionsBaseText');
 
-        // Inicializar la aplicación
         window.addEventListener('DOMContentLoaded', () => {
             populateCurrencyDropdowns();
-            // Selección por defecto: PEN a USD
             fromCurrencySelect.value = 'PEN';
             toCurrencySelect.value = 'USD';
             updateFlagsAndSymbols();
 
-            // Cargar datos de tasas y realizar primera conversión
+            // Cargar datos al iniciar
             fetchExchangeRates().then(() => {
                 calculateConversion();
                 renderTopDivisas();
             });
 
-            // Event Listeners
+            // Actualización automática instantánea en segundo plano cada 30 segundos
+            setInterval(() => {
+                fetchExchangeRates().then(() => {
+                    calculateConversion();
+                    renderTopDivisas();
+                });
+            }, 30000);
+
+            // Listeners para actualización inmediata al interactuar
             amountInput.addEventListener('input', calculateConversion);
             fromCurrencySelect.addEventListener('change', () => {
                 updateFlagsAndSymbols();
@@ -352,6 +336,7 @@
                         refreshRatesBtn.querySelector('i').classList.remove('animate-spin');
                     }, 500);
                     calculateConversion();
+                    renderTopDivisas();
                 });
             });
 
@@ -360,11 +345,9 @@
                 renderHistory();
             });
 
-            // Renderizar Lucide Icons
             lucide.createIcons();
         });
 
-        // Poblar selects con las monedas disponibles
         function populateCurrencyDropdowns() {
             const optionsHtml = CURRENCIES.map(c => 
                 `<option value="${c.code}">${c.code} - ${c.name}</option>`
@@ -374,10 +357,8 @@
             toCurrencySelect.innerHTML = optionsHtml;
         }
 
-        // Obtener tasas de cambio en tiempo real desde la API pública
         async function fetchExchangeRates() {
             try {
-                // API gratuita pública sin necesidad de Key para pruebas
                 const response = await fetch('https://open.er-api.com/v6/latest/USD');
                 if (!response.ok) throw new Error('Error al conectar con la API');
                 
@@ -385,12 +366,12 @@
                 if (data && data.rates) {
                     exchangeRates = data.rates;
                     isLiveApi = true;
-                    setApiStatus(true, 'Tasas en Vivo');
+                    setApiStatus(true, 'Tasas en Vivo (Instantáneo)');
                     const date = new Date(data.time_last_update_unix * 1000);
-                    lastUpdatedText.innerText = `Actualizado: ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                    lastUpdatedText.innerText = `Actualizado: ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
                 }
             } catch (error) {
-                console.warn('API no disponible. Usando datos simulados de respaldo.', error);
+                console.warn('API no disponible. Usando datos de respaldo.', error);
                 exchangeRates = { ...FALLBACK_RATES };
                 isLiveApi = false;
                 setApiStatus(false, 'Modo Simulado (Offline)');
@@ -398,7 +379,6 @@
             }
         }
 
-        // Actualizar indicador de estado de API
         function setApiStatus(isOnline, text) {
             apiStatusText.innerText = text;
             if (isOnline) {
@@ -410,7 +390,6 @@
             }
         }
 
-        // Actualizar banderas y símbolos en la UI
         function updateFlagsAndSymbols() {
             const fromObj = CURRENCIES.find(c => c.code === fromCurrencySelect.value);
             const toObj = CURRENCIES.find(c => c.code === toCurrencySelect.value);
@@ -424,7 +403,6 @@
             }
         }
 
-        // Intercambiar Moneda de Origen y Destino
         function swapCurrencies() {
             const temp = fromCurrencySelect.value;
             fromCurrencySelect.value = toCurrencySelect.value;
@@ -434,47 +412,37 @@
             calculateConversion();
         }
 
-        // Calcular conversión
         function calculateConversion() {
             const amount = parseFloat(amountInput.value) || 0;
             const fromCode = fromCurrencySelect.value;
             const toCode = toCurrencySelect.value;
 
-            // Obtener tasa relativa mediante USD como puente si es necesario
             const rateFromUSD = exchangeRates[fromCode] || 1;
             const rateToUSD = exchangeRates[toCode] || 1;
 
-            // 1 FROM = X TO
             const conversionRate = (1 / rateFromUSD) * rateToUSD;
             const convertedTotal = amount * conversionRate;
 
-            // Actualizar vista
             resultAmount.innerText = formatNumber(convertedTotal, toCode);
             resultCurrencyCode.innerText = toCode;
 
-            // Formatear texto de tasa unitaria
             const unitRate = (1 * conversionRate).toFixed(4);
             exchangeRateText.innerText = `1 ${fromCode} = ${unitRate} ${toCode}`;
 
-            // Renderizar conversiones rápidas
             renderQuickConversions(amount, fromCode);
 
-            // Agregar al historial si el monto > 0 (debounce implícito al presionar o modificar de forma relevante)
             if (amount > 0) {
                 addToHistory(amount, fromCode, convertedTotal, toCode, unitRate);
             }
         }
 
-        // Formateador de números según la moneda
         function formatNumber(value, currencyCode) {
-            // Monedas sin decimales comunes
             if (['CLP', 'COP', 'JPY', 'ARS'].includes(currencyCode) && value > 100) {
                 return value.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             }
             return value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
         }
 
-        // Renderizar Conversiones Rápidas (Valores comunes como 10, 50, 100, 500)
         function renderQuickConversions(baseAmount, fromCode) {
             quickConversionsBaseText.innerText = `Base: 1 ${fromCode}`;
             const targetCodes = ['USD', 'EUR', 'PEN', 'MXN'].filter(code => code !== fromCode).slice(0, 4);
@@ -503,14 +471,12 @@
             quickGrid.innerHTML = html;
         }
 
-        // Permitir cambiar moneda de destino al hacer click en rápido
         function selectQuickCurrency(code) {
             toCurrencySelect.value = code;
             updateFlagsAndSymbols();
             calculateConversion();
         }
 
-        // Gestión del Historial
         let historyDebounceTimeout;
         function addToHistory(amount, fromCode, result, toCode, unitRate) {
             clearTimeout(historyDebounceTimeout);
@@ -529,7 +495,6 @@
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 };
 
-                // Evitar duplicados idénticos consecutivos
                 if (conversionHistory.length > 0) {
                     const last = conversionHistory[0];
                     if (last.fromCode === fromCode && last.toCode === toCode && last.amount === amount) {
@@ -538,7 +503,7 @@
                 }
 
                 conversionHistory.unshift(newItem);
-                if (conversionHistory.length > 5) conversionHistory.pop(); // Máximo 5 registros
+                if (conversionHistory.length > 5) conversionHistory.pop();
                 renderHistory();
             }, 800);
         }
@@ -569,7 +534,6 @@
             lucide.createIcons();
         }
 
-        // Renderizar Top Divisas Globales
         function renderTopDivisas() {
             const topCodes = ['EUR', 'GBP', 'PEN', 'MXN', 'BRL'];
             
